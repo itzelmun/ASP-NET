@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: root-secret #This is the root password, doesn't need change anything, but rememeber the password for the root password (Just in Case)
+  namespace: net-haep #NAMESPACE
+type: kubernetes.io/base64
+data:
+  root-password: cm9vdHBlcGFwaWc=
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: phpmyadmin-secret #This password uses in the phphmyadmin's pod, must be the same for the database's user in the docker file environment variable
+  namespace: net-haep #NAMESPACE
+type: kubernetes.io/base64
+data:
+  phpmyadmin-password: cHNzd3JkLXAxZjBkc2QtdXNlciE=
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: proyecto-secret #This password uses in the proyecto's pod, must be the same for the database's user in the docker file environment variable
+  namespace: net-haep #NAMESPACE
+type: kubernetes.io/base64
+data:
+  proyecto-password: cHNzd3JkLXAxZjBkc2QtdXNlciE=
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+  namespace: net-haep
+type: Opaque
+data:
+  ENDPOINT: bXlzcWwtbmV0
+  DATABASE: cHJveWVjdG8=
+  USERD: dXNlcg==
+  PASSD: cHNzd3JkLXAxZjBkc2QtdXNlciE=
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-net #Name for mysql service must be the same here and in the SVC
+  namespace: net-haep #NAMESPACE
+spec:
+  serviceName: "mysql-net" #Name for mysql service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-net #Name for mysql service
+  template:
+    metadata:
+      labels:
+        app: mysql-net  #Name for mysql service
+    spec:
+      containers:
+        - name: mysql-net  #Name for mysql service
+          image: mysql:8.1  #Docker Image
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: root-secret 
+                  key: root-password
+            - name: TZ
+              value: "America/Chihuahua"
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: net-mysql-pvc # REFERENCE: PVC NAME in storage yaml
+              mountPath: /var/lib/mysql
+            - name: net-mysql-scripts  #Reference NAME = 1
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: net-mysql-pvc # REFERENCE: PVC NAME in storage yaml
+          persistentVolumeClaim:
+            claimName: net-mysql-pvc # REFERENCE: PVC NAME in storage yaml
+        - name: net-mysql-scripts  #Reference NAME = 1
+          configMap:
+            name: import-net-scripts  #REFERENCE: Is the name from the script in the configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-net #Name for mysql service must be the same here and in the mysql deployment
+  namespace: net-haep #NAMESPACE
+spec:
+  selector:
+    app: mysql-net #Name for mysql service
+  type: ClusterIP
+  ports:
+    - name: mysql-net #Name for mysql service
+      port: 3306

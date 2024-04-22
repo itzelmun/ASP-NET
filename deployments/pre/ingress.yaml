@@ -1,0 +1,32 @@
+# ingress.yml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traefik-ingress-net-haep
+  namespace: net-haep
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: net-haep-https-redirect@kubernetescrd, net-haep-add-forwarded-proto@kubernetescrd
+spec:
+ ingressClassName: traefik
+ tls:
+ - hosts:
+   - pre-datacenter.ucol.mx
+ rules:
+  - host: "pre-datacenter.ucol.mx"
+    http:
+      paths:
+      - pathType: Prefix
+        path: /net-haep
+        backend:
+          service:
+            name: helloworld-service
+            port:
+              number: 80
+      
+      - pathType: Prefix
+        path: /admin-net-haep
+        backend:
+          service:
+            name: admin-net
+            port:
+              number: 80

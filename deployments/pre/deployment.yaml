@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helloworld-deployment
+  namespace: net-haep
+  labels:
+    app: helloworld
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: helloworld
+  template:
+    metadata:
+      labels:
+        app: helloworld
+    spec:
+      imagePullSecrets:
+      - name: my-docker-credentials
+      containers:
+      - name: helloworld
+        image: udeccolima/net:pre  
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ENDPOINT
+          value: mysql-net #Environment variable
+        - name: DATABASE
+          value: proyecto #Environment variable
+        - name: USERD
+          value: user #Environment variable
+        - name: PASSD
+          valueFrom:
+            secretKeyRef:
+              name: proyecto-secret #doesn't need a change, it's the statefulset secret
+              key: proyecto-password  #doesn't need a change, it's the statefulset secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: helloworld-service
+  namespace: net-haep
+spec:
+  selector:
+    app: helloworld
+  ports:
+    - protocol: TCP
+      port: 80  
+      targetPort: 8080 
+  type: ClusterIP
