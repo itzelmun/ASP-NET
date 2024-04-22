@@ -1,0 +1,9 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: add-forwarded-proto
+  namespace: net
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Proto: "https"

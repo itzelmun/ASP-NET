@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-net
+  namespace: net
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin-net
+  template:
+    metadata:
+      labels:
+        app: admin-net
+    spec:
+      imagePullSecrets:
+      - name: my-docker-credentials
+      containers:
+        - name: admin-net
+          image: udeccolima/phpmyadmin:net
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - name: PMA_HOST
+              value: mysql-net
+            - name: PMA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: deploy-secret
+                  key: deploy-password
+          volumeMounts:
+            - name: sessions
+              mountPath: /sessions
+      volumes:
+        - name: sessions
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-net
+  namespace: net
+spec:
+  type: ClusterIP
+  selector:
+    app: admin-net
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80

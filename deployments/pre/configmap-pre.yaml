@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: import-net-scripts
+  namespace: net-pre
+data:
+  proyecto.sql: |
+    CREATE DATABASE IF NOT EXISTS proyecto;
+    USE proyecto;
+    CREATE USER 'user'@'%' IDENTIFIED BY 'u00947hyASPdfkl_111NEThs-pa44s55w--?7';
+    GRANT ALL PRIVILEGES ON *.* TO 'user'@'%' WITH GRANT OPTION;
+    CREATE USER 'read'@'%' IDENTIFIED BY '$read-secure-psswrd&';
+    GRANT SELECT ON proyecto.* TO 'read'@'%';
+    CREATE USER 'write'@'%' IDENTIFIED BY '=access-for-write-user##';
+    GRANT SELECT, INSERT, UPDATE, DELETE ON proyecto.* TO 'write'@'%';
+    FLUSH PRIVILEGES;

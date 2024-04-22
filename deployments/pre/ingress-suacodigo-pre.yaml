@@ -1,0 +1,34 @@
+# ingress.yml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traefik-ingress-net-pre
+  namespace: net-pre
+  annotations:
+      traefik.ingress.kubernetes.io/router.middlewares: net-pre-https-redirect@kubernetescrd, net-pre-add-forwarded-proto@kubernetescrd
+spec:
+ ingressClassName: traefik
+ tls:
+ - hosts:
+   - pre-datacenter.ucol.mx
+   secretName: microbot-data
+ rules:
+
+  - host: "pre-datacenter.ucol.mx"
+    http:
+      paths:
+      - pathType: Prefix
+        path: /net
+        backend:
+          service:
+            name: net
+            port:
+              number: 80
+
+      - pathType: Prefix
+        path: /admin-net
+        backend:
+          service:
+            name: admin-net
+            port:
+              number: 80

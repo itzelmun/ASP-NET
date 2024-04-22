@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: net
+  namespace: net-pre
+  labels:
+    app: net
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: net
+  template:
+    metadata:
+      labels:
+        app: net
+    spec:
+      imagePullSecrets:
+      - name: my-docker-credentials
+      containers:
+      - name: net
+        image: udeccolima/net:simplesaml-pre 
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ENDPOINT
+          value: mysql-net-pre #Environment variable
+        - name: DATABASE
+          value: proyecto #Environment variable
+        - name: USERD
+          value: user #Environment variable
+        - name: PASSD
+          valueFrom:
+            secretKeyRef:
+              name: deploy-secret #doesn't need a change, it's the statefulset secret
+              key: deploy-password  #doesn't need a change, it's the statefulset secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: net
+  namespace: net-pre
+spec:
+  selector:
+    app: net
+  ports:
+    - protocol: TCP
+      port: 80  
+      targetPort: 8080 
+  type: ClusterIP
